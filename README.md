@@ -2,7 +2,7 @@
 
 A reusable blueprint for landing a large Oracle ERP (CGI Advantage, PeopleSoft, Oracle Financials, and similar) into Unity Catalog with the Lakeflow Connect query-based connector (QBC), deployed with Declarative Automation Bundles (DABs).
 
-It comes from a production migration of a county finance system of record: about 1,700 tables and 4 TB, full load in about 15 hours and nightly incrementals in about 3.5 hours. Every rule below is something that broke at least once.
+It comes from a production migration of a large public-sector ERP: about 1,700 tables and 4 TB, full load in about 15 hours and nightly incrementals in about 3.5 hours. Every rule below is something that broke at least once.
 
 **What's in the box**
 
@@ -125,7 +125,7 @@ A retry matrix (fails every time vs. passes on retry) separates A from B and C i
 
 - The UI **Full Refresh** on an incremental table can rebuild from staged changes, not from source. Confirm in the event log that a source read happened.
 - Custom DBR images can't run on serverless. If a spec pins a custom image and sets serverless, it silently runs on classic.
-- The connector fix "universe" is independent of the DBR version number. Ask engineering which release carries a fix; don't infer it from the runtime.
+- Connector fixes ship with the pipeline engine release, independent of the DBR version number. Ask engineering which release carries a fix; don't infer it from the runtime.
 - The Oracle service name is `source_catalog` in the pipeline spec, not a connection option. Changing it is a pipeline change: test in QA that cursor state is kept before doing it in prod.
 - Default settings beat hand-tuning more often than you'd think. Remove overrides that don't earn their keep.
 
