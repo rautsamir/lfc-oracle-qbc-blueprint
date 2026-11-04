@@ -1,0 +1,48 @@
+resources:
+  pipelines:
+    qbc_l_00:
+      name: ${bundle.target}_qbc_l_00
+      catalog: ${var.dest_catalog}
+      target: ${var.dest_schema}
+      serverless: true
+      ingestion_definition:
+        connection_name: ${var.connection_name}
+        objects:
+          - table:
+              source_catalog: ${var.source_catalog}
+              source_schema: ${var.source_schema}
+              source_table: AD_DOC_ACTG
+              destination_catalog: ${var.dest_catalog}
+              destination_schema: ${var.dest_schema}
+              destination_table: ad_doc_actg
+              table_configuration:
+                scd_type: SCD_TYPE_1
+                primary_keys:
+                  - DOC_CD
+                  - DOC_DEPT_CD
+                  - DOC_ID
+                  - DOC_VERS_NO
+                  - DOC_ACTG_LN_NO
+                query_based_connector_config:
+                  cursor_columns:
+                    - DOC_LAST_DT
+                  hard_deletion_sync_min_interval_in_seconds: 86400
+          - table:
+              source_catalog: ${var.source_catalog}
+              source_schema: ${var.source_schema}
+              source_table: PYRL_DOC_ACTG
+              destination_catalog: ${var.dest_catalog}
+              destination_schema: ${var.dest_schema}
+              destination_table: pyrl_doc_actg
+              table_configuration:
+                scd_type: SCD_TYPE_1
+                primary_keys:
+                  - DOC_CD
+                  - DOC_DEPT_CD
+                  - DOC_ID
+                  - DOC_VERS_NO
+                  - DOC_ACTG_LN_NO
+                query_based_connector_config:
+                  cursor_columns:
+                    - DOC_LAST_DT
+                  hard_deletion_sync_min_interval_in_seconds: 86400

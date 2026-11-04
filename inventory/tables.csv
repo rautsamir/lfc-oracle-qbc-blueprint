@@ -1,0 +1,10 @@
+source_table,primary_keys,cursor_column,cursor_indexed,size_gb,tier,partition_column,deletes,notes
+VENDOR,VEND_CUST_CD,LAST_UPDATE_DT,Y,0.4,S,,hard,
+DEPT,DEPT_CD,LAST_UPDATE_DT,Y,0.1,S,,none,
+FUND,FUND_CD|BFY,LAST_UPDATE_DT,Y,0.2,S,,none,
+DOC_HDR,DOC_CD|DOC_DEPT_CD|DOC_ID|DOC_VERS_NO,DOC_LAST_DT,Y,12.5,M,,hard,
+PO_DOC_HDR,DOC_CD|DOC_DEPT_CD|DOC_ID|DOC_VERS_NO,DOC_LAST_DT,Y,7.6,M,,hard,composite key; watch for class A
+PYRL_DOC_ACTG,DOC_CD|DOC_DEPT_CD|DOC_ID|DOC_VERS_NO|DOC_ACTG_LN_NO,DOC_LAST_DT,Y,85.0,L,,hard,
+AD_DOC_ACTG,DOC_CD|DOC_DEPT_CD|DOC_ID|DOC_VERS_NO|DOC_ACTG_LN_NO,DOC_LAST_DT,Y,163.0,L,,hard,
+JRNL_ACTG,BFY|DOC_CD|DOC_DEPT_CD|DOC_ID|REC_NO,TBL_LAST_DT,Y,782.0,XL,REC_NO,none,append-heavy; cursor index added by DBA
+DOC_ACTG,DOC_CD|DOC_DEPT_CD|DOC_ID|DOC_VERS_NO|DOC_ACTG_LN_NO,DOC_LAST_DT,Y,402.0,XL,,hard,default partitioning won over override

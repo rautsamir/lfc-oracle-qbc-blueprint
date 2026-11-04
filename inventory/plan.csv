@@ -1,0 +1,6 @@
+pipeline,tier,tables,total_gb,largest_gb,est_hours,partition_override,table_list,status,pipeline_id,failure_class,last_run_hours,notes
+qbc_s_00,S,3,0.7,0.4,0.1,,VENDOR FUND DEPT,Not started,,,,
+qbc_m_00,M,2,20.1,12.5,0.4,,DOC_HDR PO_DOC_HDR,Not started,,,,
+qbc_l_00,L,2,248.0,163.0,4.1,,AD_DOC_ACTG PYRL_DOC_ACTG,Not started,,,,
+qbc_xl_00_doc_actg,XL,1,402.0,402.0,10.1,,DOC_ACTG,Not started,,,,
+qbc_xl_01_jrnl_actg,XL,1,782.0,782.0,19.6,REC_NO,JRNL_ACTG,Not started,,,,

@@ -1,0 +1,53 @@
+resources:
+  jobs:
+    qbc_orchestration:
+      name: ${bundle.target}_qbc_orchestration
+      max_concurrent_runs: 1
+      # Time-based trigger. Paused by default so the first run is deliberate.
+      schedule:
+        quartz_cron_expression: ${var.schedule_cron}
+        timezone_id: ${var.schedule_timezone}
+        pause_status: PAUSED
+      # Event-based alternative: start when an upstream table updates (for example a
+      # control table the source's nightly batch writes). Replace schedule with:
+      # trigger:
+      #   table_update:
+      #     table_names:
+      #       - ${var.dest_catalog}.ops.source_batch_complete
+      queue:
+        enabled: true
+      email_notifications:
+        on_failure:
+          - ${var.notify_email}
+      tags:
+        bundle: ${bundle.name}
+        target: ${bundle.target}
+      tasks:
+        - task_key: qbc_s_00
+          pipeline_task:
+            pipeline_id: ${resources.pipelines.qbc_s_00.id}
+            full_refresh: false  # never full-refresh from the scheduler
+        - task_key: qbc_m_00
+          depends_on:
+            - task_key: qbc_s_00
+          pipeline_task:
+            pipeline_id: ${resources.pipelines.qbc_m_00.id}
+            full_refresh: false  # never full-refresh from the scheduler
+        - task_key: qbc_l_00
+          depends_on:
+            - task_key: qbc_s_00
+          pipeline_task:
+            pipeline_id: ${resources.pipelines.qbc_l_00.id}
+            full_refresh: false  # never full-refresh from the scheduler
+        - task_key: qbc_xl_00_doc_actg
+          depends_on:
+            - task_key: qbc_s_00
+          pipeline_task:
+            pipeline_id: ${resources.pipelines.qbc_xl_00_doc_actg.id}
+            full_refresh: false  # never full-refresh from the scheduler
+        - task_key: qbc_xl_01_jrnl_actg
+          depends_on:
+            - task_key: qbc_s_00
+          pipeline_task:
+            pipeline_id: ${resources.pipelines.qbc_xl_01_jrnl_actg.id}
+            full_refresh: false  # never full-refresh from the scheduler
