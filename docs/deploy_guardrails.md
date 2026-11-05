@@ -9,7 +9,7 @@ A pipeline owns the tables it creates. Anything that makes the bundle delete and
 | Add a table to `objects` | New table, full load for that table only | Safe |
 | Remove a table from `objects` | Table is no longer managed; check whether it's dropped | Review |
 | Change cursor column, PKs, SCD type, delete settings | In place; may trigger a refresh of that table | Test in QA |
-| Change `source_catalog` (Oracle service name) | No documented guarantee that cursor state is kept | Test in QA first |
+| Change `source_catalog` (Oracle service name) | Same pipeline, cursor state kept, incremental continues (verified in a customer QA, same host). Not documented as a guarantee | Safe on the same host; still check the next run in QA |
 | **Change `connection_name`** | **Pipeline recreated; its tables dropped** | **Migration** |
 | Rename the pipeline resource key | Bundle sees delete + create | Migration |
 | Missing explicit `catalog`/`target` | Spurious diff, possible recreate | Always set both |

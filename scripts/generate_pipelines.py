@@ -116,7 +116,7 @@ def table_block(r):
     return "\n".join(lines)
 
 
-def pipeline_yaml(key, tables, partition_column=None):
+def pipeline_yaml(key, tables, partition_column=None, classic=False):
     out = [
         "resources:",
         "  pipelines:",
@@ -124,8 +124,13 @@ def pipeline_yaml(key, tables, partition_column=None):
         f"      name: ${{bundle.target}}_{key}",
         "      catalog: ${var.dest_catalog}",
         "      target: ${var.dest_schema}",
-        "      serverless: true",
     ]
+    if classic:
+        # Classic compute for QBC is Beta. Use it when only classic networking can reach Oracle.
+        out += ["      serverless: false", "      clusters:", "        - label: default",
+                "          autoscale:", "            min_workers: 1", "            max_workers: 4"]
+    else:
+        out += ["      serverless: true"]
     if partition_column:
         out += ["      configuration:", f"        dlt-pipelines.qbcPartitionColumn: {partition_column}"]
     out += ["      ingestion_definition:", "        connection_name: ${var.connection_name}", "        objects:"]
@@ -182,6 +187,7 @@ def main():
     ap.add_argument("inventory")
     ap.add_argument("outdir")
     ap.add_argument("--plan", default=None, help="write a plan CSV (one row per pipeline)")
+    ap.add_argument("--classic", action="store_true", help="classic pipeline compute instead of serverless (QBC Beta)")
     a = ap.parse_args()
 
     rows = load(a.inventory)
@@ -199,7 +205,7 @@ def main():
         for n, g in enumerate(groups):
             key = f"qbc_{tier.lower()}_{n:02d}" + (f"_{g[0]['source_table'].lower()}" if len(g) == 1 and tier in ("L", "XL") else "")
             pc = g[0]["partition_column"] if len(g) == 1 else None
-            (outdir / f"{key}.yml").write_text(pipeline_yaml(key, g, pc))
+            (outdir / f"{key}.yml").write_text(pipeline_yaml(key, g, pc, a.classic))
             keys_by_tier.setdefault(tier, []).append(key)
             plan.append({
                 "pipeline": key, "tier": tier, "tables": len(g),
