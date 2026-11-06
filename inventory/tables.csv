@@ -1,10 +1,11 @@
-source_table,primary_keys,cursor_column,cursor_indexed,size_gb,tier,partition_column,deletes,notes
-VENDOR,VEND_CUST_CD,LAST_UPDATE_DT,Y,0.4,S,,hard,
-DEPT,DEPT_CD,LAST_UPDATE_DT,Y,0.1,S,,none,
-FUND,FUND_CD|BFY,LAST_UPDATE_DT,Y,0.2,S,,none,
-DOC_HDR,DOC_CD|DOC_DEPT_CD|DOC_ID|DOC_VERS_NO,DOC_LAST_DT,Y,12.0,M,,hard,
-PO_DOC_HDR,DOC_CD|DOC_DEPT_CD|DOC_ID|DOC_VERS_NO,DOC_LAST_DT,Y,8.0,M,,hard,composite key; watch for class A
-PYRL_DOC_ACTG,DOC_CD|DOC_DEPT_CD|DOC_ID|DOC_VERS_NO|DOC_ACTG_LN_NO,DOC_LAST_DT,Y,90.0,L,,hard,
-AD_DOC_ACTG,DOC_CD|DOC_DEPT_CD|DOC_ID|DOC_VERS_NO|DOC_ACTG_LN_NO,DOC_LAST_DT,Y,140.0,L,,hard,
-JRNL_ACTG,BFY|DOC_CD|DOC_DEPT_CD|DOC_ID|REC_NO,TBL_LAST_DT,Y,650.0,XL,REC_NO,none,append-heavy; cursor index added by DBA
-DOC_ACTG,DOC_CD|DOC_DEPT_CD|DOC_ID|DOC_VERS_NO|DOC_ACTG_LN_NO,DOC_LAST_DT,Y,380.0,XL,,hard,default partitioning won over override
+source_table,primary_keys,cursor_column,cursor_indexed,size_gb,tier,partition_column,deletes,notes,load_mode
+VENDOR,VEND_CUST_CD,LAST_UPDATE_DT,Y,0.4,S,,hard,,incremental
+DEPT,DEPT_CD,LAST_UPDATE_DT,Y,0.1,S,,none,,incremental
+FUND,FUND_CD|BFY,LAST_UPDATE_DT,Y,0.2,S,,none,,incremental
+DOC_HDR,DOC_CD|DOC_DEPT_CD|DOC_ID|DOC_VERS_NO,DOC_LAST_DT,Y,12.0,M,,hard,,incremental
+PO_DOC_HDR,DOC_CD|DOC_DEPT_CD|DOC_ID|DOC_VERS_NO,DOC_LAST_DT,Y,8.0,M,,hard,composite key; watch for class A,incremental+periodic
+PYRL_DOC_ACTG,DOC_CD|DOC_DEPT_CD|DOC_ID|DOC_VERS_NO|DOC_ACTG_LN_NO,DOC_LAST_DT,Y,90.0,L,,hard,,incremental
+AD_DOC_ACTG,DOC_CD|DOC_DEPT_CD|DOC_ID|DOC_VERS_NO|DOC_ACTG_LN_NO,DOC_LAST_DT,Y,140.0,L,,hard,,incremental
+JRNL_ACTG,BFY|DOC_CD|DOC_DEPT_CD|DOC_ID|REC_NO,TBL_LAST_DT,Y,650.0,XL,REC_NO,none,append-heavy; cursor index added by DBA,incremental
+DOC_ACTG,DOC_CD|DOC_DEPT_CD|DOC_ID|DOC_VERS_NO|DOC_ACTG_LN_NO,DOC_LAST_DT,Y,380.0,XL,,hard,default partitioning won over override,incremental
+HR_PAY_STAGE,EMPLID|PAY_END_DT,,N,0.6,S,,none,app truncates and reloads nightly,full

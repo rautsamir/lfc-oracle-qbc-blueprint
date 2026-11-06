@@ -1,0 +1,22 @@
+resources:
+  jobs:
+    qbc_periodic_full_refresh:
+      name: ${bundle.target}_qbc_periodic_full_refresh
+      max_concurrent_runs: 1
+      schedule:
+        quartz_cron_expression: ${var.periodic_refresh_cron}
+        timezone_id: ${var.schedule_timezone}
+        pause_status: PAUSED
+      queue:
+        enabled: true
+      email_notifications:
+        on_failure:
+          - ${var.notify_email}
+      tags:
+        bundle: ${bundle.name}
+        target: ${bundle.target}
+      tasks:
+        - task_key: qbc_m_01
+          pipeline_task:
+            pipeline_id: ${resources.pipelines.qbc_m_01.id}
+            full_refresh: true  # incremental+periodic tables only

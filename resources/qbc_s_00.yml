@@ -11,6 +11,18 @@ resources:
           - table:
               source_catalog: ${var.source_catalog}
               source_schema: ${var.source_schema}
+              source_table: HR_PAY_STAGE
+              destination_catalog: ${var.dest_catalog}
+              destination_schema: ${var.dest_schema}
+              destination_table: hr_pay_stage
+              table_configuration:
+                scd_type: SCD_TYPE_1
+                primary_keys:
+                  - EMPLID
+                  - PAY_END_DT
+          - table:
+              source_catalog: ${var.source_catalog}
+              source_schema: ${var.source_schema}
               source_table: VENDOR
               destination_catalog: ${var.dest_catalog}
               destination_schema: ${var.dest_schema}

@@ -40,6 +40,15 @@ FROM :OWNER.:TABLE;
 -- 6. Cursor NULLs (rows with NULL cursor are never ingested)
 SELECT COUNT(*) - COUNT(LAST_UPDATE_DT) AS null_cursor_rows FROM :OWNER.:TABLE;
 
+-- 6b. Does the cursor move when the app updates rows? Updates with no cursor movement mean
+--     incremental will miss changes. TRUNCATED = YES means truncate-and-reload: use load_mode=full.
+--     (scripts/check_load_mode.py runs this for every table.)
+--     Optional, for fresher counts: EXEC DBMS_STATS.FLUSH_DATABASE_MONITORING_INFO;
+SELECT m.inserts, m.updates, m.deletes, m.truncated, m.timestamp AS since,
+       (SELECT MAX(LAST_UPDATE_DT) FROM :OWNER.:TABLE) AS max_cursor
+FROM all_tab_modifications m
+WHERE m.table_owner = :OWNER AND m.table_name = :TABLE AND m.partition_name IS NULL;
+
 -- 7. MIN/MAX should use INDEX FULL SCAN (MIN/MAX), not TABLE ACCESS FULL
 EXPLAIN PLAN FOR
 SELECT (SELECT MIN(LAST_UPDATE_DT) FROM :OWNER.:TABLE) AS min_v,

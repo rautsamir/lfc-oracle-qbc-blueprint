@@ -12,6 +12,7 @@ It comes from a production migration of a large public-sector ERP: about 1,700 t
 | `databricks.yml` | Bundle with dev / qa / prod targets and per-target variables |
 | `sql/oracle_inventory_extract.sql` | One query that writes the inventory straight from Oracle (sizes, keys, cursor guess, index check) |
 | `inventory/tables.csv` | Sample table inventory (one row per source table) |
+| `scripts/check_load_mode.py` | Profiles each table's cursor in Oracle and recommends incremental, full, or incremental+periodic |
 | `scripts/generate_pipelines.py` | Turns the inventory into tiered, size-balanced pipeline YAML, the job, and a plan CSV |
 | `scripts/plan_to_sheet.py` | Publishes the plan and inventory to a Google Sheet tracker (status, failure class, count vs. volume) |
 | `resources/` | Generated pipelines plus a tiered orchestration job |
@@ -43,6 +44,33 @@ Pull the inventory from Oracle with `sql/oracle_inventory_extract.sql`, export i
 4. **Size tier**: S, M, L, XL by GB and rows. The tier decides how many tables share a pipeline.
 5. **Partition column override (XL only, if needed)**: must be the first column of an index, should have at most about 50,000 rows per distinct value, and should not be the cursor column.
 6. **Deletes**: none, soft (`deletion_condition`), or hard (`hard_deletion_sync_min_interval_in_seconds`, Beta, SCD1 only, requires primary keys).
+7. **Load mode**: incremental, full, or incremental+periodic (below).
+
+### Choose a load mode
+
+| Use | When | Inventory |
+|---|---|---|
+| **Incremental** | A single cursor column the app updates on every insert and update, never NULL; a primary key; big enough that a nightly reload costs real time | `load_mode=incremental` (default) |
+| **Full load every run** | The app truncates and reloads the table; no trustworthy cursor (updates don't touch it, back-dated rows, bulk loads); a small lookup table where reloading is cheap | `load_mode=full`, cursor left blank |
+| **Incremental + periodic full refresh** | Incremental works, but some changes slip past the cursor now and then (back-dated corrections, a batch that skips the timestamp) | `load_mode=incremental+periodic` |
+
+- Every table needs primary keys for SCD Type 1. They don't have to be an Oracle constraint: a unique column set from the app team works.
+- Full load on an L or XL table is expensive every night. Fixing the cursor with the app team is usually better.
+- incremental+periodic tables get their own pipelines and a monthly job (paused by default) that full-refreshes only them. That job is the only place `full_refresh: true` appears.
+- The docs say a table without a monotonically increasing cursor is fully loaded on each run, but the reference also lists the cursor as required for connection-based ingestion. Prove a `full` table in QA, and check that rows deleted in Oracle disappear; if they don't, keep hard-delete sync on.
+
+`scripts/check_load_mode.py` makes the first pass. Per table it checks NULL cursors, whether the cursor moved since Oracle last recorded updates (`ALL_TAB_MODIFICATIONS`), truncates, deletes, and primary keys, then writes a recommendation and an updated inventory. Anything marked `review` needs a person, usually the app team.
+
+```bash
+# No Python access to Oracle: generate SQL, run it in SQL Developer or DBeaver, export the grid as CSV
+python scripts/check_load_mode.py emit inventory/tables.csv --owner APP_OWNER --only DOC_HDR,PO_DOC_HDR > load_mode_check.sql
+python scripts/check_load_mode.py recommend inventory/tables.csv load_mode_results.csv
+
+# Or directly (pip install oracledb; password is prompted, never passed as an argument)
+ORACLE_USER=readonly ORACLE_DSN=host:1521/SERVICE python scripts/check_load_mode.py run inventory/tables.csv --owner APP_OWNER
+```
+
+Start with a few tables (`--only`); one statement across a whole ERP is slow. L and XL tables are sampled at 1 percent.
 
 Packaged ERPs use composite keys whose leading column is a low-cardinality code (fiscal year, document type). That design is right for the application and wrong for parallel reads. Expect to handle a small set of tables specially; don't ask the customer to redesign their schema.
 
@@ -57,6 +85,7 @@ Run `sql/oracle_preflight.sql` with the DBA to fill the inventory.
 5. **Track by pipeline, report by count and by volume.** `scripts/plan_to_sheet.py` creates the tracker. Record a failure class (A, B, or C) on each failed pipeline, so "4 failed" becomes "2 retry alone, 2 need config."
 
 ```bash
+python scripts/check_load_mode.py recommend inventory/tables.csv load_mode_results.csv   # optional first pass
 python scripts/generate_pipelines.py inventory/tables.csv resources/ --plan inventory/plan.csv
 GOOGLE_TOKEN=$(gcloud auth print-access-token) python scripts/plan_to_sheet.py inventory/tables.csv inventory/plan.csv "ERP QBC Tracker"
 ```
@@ -83,7 +112,7 @@ See `docs/network_patterns.md`.
 - **Changing `connection_name` on a deployed pipeline recreates it and drops every table it manages.** Treat connection changes as a migration, not a config edit. See `docs/deploy_guardrails.md`.
 - Never run `bundle deploy --auto-approve` in qa or prod. Review the plan for `delete` or `recreate` first.
 - Pipelines created in the UI first? **Bind them** to the bundle (`databricks bundle deployment bind <key> <pipeline_id>`) instead of letting the bundle create new ones, so existing tables and cursor state are kept.
-- The scheduler never full-refreshes: every job task sets `full_refresh: false`.
+- The scheduler never full-refreshes: every job task sets `full_refresh: false`. The one exception is the paused monthly job for incremental+periodic tables.
 
 ```bash
 python scripts/generate_pipelines.py inventory/tables.csv resources/          # add --classic if only classic compute can reach Oracle (QBC Beta)

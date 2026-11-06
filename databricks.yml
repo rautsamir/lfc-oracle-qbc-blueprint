@@ -21,6 +21,9 @@ variables:
   schedule_cron:
     description: Quartz cron for the orchestration job
     default: "0 0 2 * * ?"
+  periodic_refresh_cron:
+    description: Quartz cron for the periodic full refresh of incremental+periodic tables (job is paused by default)
+    default: "0 0 3 1 * ?"
   schedule_timezone:
     default: America/Los_Angeles
   notify_email:

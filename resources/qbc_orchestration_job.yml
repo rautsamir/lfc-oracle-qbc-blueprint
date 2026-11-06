@@ -33,6 +33,12 @@ resources:
           pipeline_task:
             pipeline_id: ${resources.pipelines.qbc_m_00.id}
             full_refresh: false  # never full-refresh from the scheduler
+        - task_key: qbc_m_01
+          depends_on:
+            - task_key: qbc_s_00
+          pipeline_task:
+            pipeline_id: ${resources.pipelines.qbc_m_01.id}
+            full_refresh: false  # never full-refresh from the scheduler
         - task_key: qbc_l_00
           depends_on:
             - task_key: qbc_s_00

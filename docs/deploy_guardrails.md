@@ -39,4 +39,9 @@ Unbind with `databricks bundle deployment unbind <key>` if you need to hand a pi
 
 ## Full refresh
 
+"Full refresh" means two different things. Keep them apart:
+
+- **Full load as a load mode** (`load_mode=full`): the table has no cursor, so every run reads all of it. That's normal operation for that table.
+- **Full refresh as an action** (UI button, `full_refresh: true`, `full_refresh_selection`): resets a table and reloads it from scratch. Use it after a cursor or schema change, for a corrupted table, or on a schedule for incremental+periodic tables. Never from the nightly scheduler.
+
 - For incremental tables, confirm in the event log that a full refresh actually re-read the source. A 28-second "full refresh" that produced 608 rows from a 345M-row table is the warning sign.
